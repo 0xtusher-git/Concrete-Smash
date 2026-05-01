@@ -192,6 +192,7 @@
   let board = [];
   const rows = 8, cols = 8;
   let score = 0, level = 1, moves = 15, targetScore = 10;
+  let activeImagesCount = 4;
   let isAnimating = false;
   let username = "";
   let tileSize = window.innerWidth > 600 ? 60 : window.innerWidth * 0.11;
@@ -284,8 +285,21 @@
 
   function initLevel() {
     score = 0;
-    targetScore = level * 15 + Math.floor(level * 5);
-    moves = 15 + Math.floor(level * 2);
+    
+    // Scale tile variety naturally based on level (min 4, max 11)
+    activeImagesCount = 4 + Math.floor((level - 1) / 3);
+    if (activeImagesCount > images.length) activeImagesCount = images.length;
+
+    if (level <= 3) {
+      // Levels 1-3 are very easy
+      targetScore = level * 15;
+      moves = 15 + (level * 2);
+    } else {
+      // Gradual difficulty increase
+      targetScore = 45 + (level - 3) * 25;
+      moves = 21 + Math.floor((level - 3) * 1.5);
+    }
+
     updateUI();
     createBoard();
   }
@@ -332,7 +346,7 @@
       for(let c=0; c<cols; c++) {
         let type;
         do {
-          type = Math.floor(Math.random() * images.length);
+          type = Math.floor(Math.random() * activeImagesCount);
         } while (
           (c >= 2 && row[c-1].type === type && row[c-2].type === type) ||
           (r >= 2 && board[r-1][c].type === type && board[r-2][c].type === type)
@@ -536,7 +550,7 @@
     for(let c=0; c<cols; c++) {
       for(let r=0; r<rows; r++) {
         if(board[r][c] === null) {
-          let type = Math.floor(Math.random() * images.length);
+          let type = Math.floor(Math.random() * activeImagesCount);
           let tile = createTileElement(r, c, type);
           tile.style.top = (-tileSize) + 'px'; // Start above board
           tile.style.left = (c * tileSize) + 'px';
@@ -645,7 +659,7 @@
     // Clear matches silently if any formed
     while(findMatches().length > 0) {
       for(let m of findMatches()) {
-        let newType = Math.floor(Math.random() * images.length);
+        let newType = Math.floor(Math.random() * activeImagesCount);
         board[m.r][m.c].type = newType;
         board[m.r][m.c].element.style.backgroundImage = `url('${images[newType]}')`;
       }
